@@ -1,0 +1,11 @@
+Admin Account:
+
+Email: admin@company.com
+
+Password: hashed_password_123 (Option 1) or password (Option 2)
+
+Employee Account:
+
+Email: john.doe@company.com
+
+Password: hashed_password_456 (Option 1) or password (Option 2)
