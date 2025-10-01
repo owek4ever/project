@@ -29,14 +29,24 @@ if ($userData['role'] !== 'employee') {
     exit();
 }
 
-// Fetch stats for cards (Employee-specific)
-// My Coupons (Removed from display, keeping query for potential future use)
+// Fetch stats for dashboard cards
+// My Coupons Count
 $stmt = $conn->prepare("SELECT COUNT(*) as my_coupons FROM coupon_redemptions WHERE employee_id = ?");
 $stmt->execute([$userData['user_id']]);
 $my_coupons = $stmt->fetch(PDO::FETCH_ASSOC)['my_coupons'];
 
-// System Health (Removed from display, no need to keep placeholder)
-$system_health = 98;
+// Available Coupons Count
+$stmt = $conn->query("SELECT COUNT(*) as available_coupons FROM coupons WHERE expiry_date >= CURDATE()");
+$available_coupons = $stmt->fetch(PDO::FETCH_ASSOC)['available_coupons'];
+
+// Recent Announcements Count
+$stmt = $conn->query("SELECT COUNT(*) as recent_announcements FROM announcements WHERE is_published = 1 AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+$recent_announcements = $stmt->fetch(PDO::FETCH_ASSOC)['recent_announcements'];
+
+// My Feedback Count
+$stmt = $conn->prepare("SELECT COUNT(*) as my_feedback FROM feedback WHERE employee_id = ?");
+$stmt->execute([$userData['user_id']]);
+$my_feedback_count = $stmt->fetch(PDO::FETCH_ASSOC)['my_feedback'];
 
 // Fetch the most recent announcement (title, image, and description)
 $stmt = $conn->query("SELECT a.title, a.image_path, a.content AS description 
@@ -56,7 +66,7 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TT Employee Dashboard - User Management System</title>
+    <title>Employee Dashboard - Tunisie Telecom</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -67,7 +77,6 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         :root {
             --primary-color: #3498db;
-            --primary-dark: #2980b9;
             --secondary-color: #2c3e50;
             --accent-color: #2ecc71;
             --danger-color: #e74c3c;
@@ -76,16 +85,28 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
             --dark-text: #2c3e50;
             --light-text: #ecf0f1;
             --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            --card-hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
             --transition: all 0.3s ease;
+            --border-radius: 15px;
+            --gradient-primary: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            --gradient-card: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+            --gradient-stats: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gold-gradient: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            --info-gradient: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            --success-gradient: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            --warning-gradient: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
-            height: 100vh;
+            background: var(--gradient-primary);
             color: var(--dark-text);
             position: relative;
-            overflow: hidden;
         }
 
         body::before {
@@ -105,6 +126,52 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: 200px 0;
+            }
+        }
+
         .dashboard-container {
             display: flex;
             height: 100vh;
@@ -120,7 +187,8 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
             box-shadow: var(--card-shadow);
             z-index: 100;
             transition: var(--transition);
-            overflow: hidden;
+            flex-shrink: 0;
+            overflow-y: auto;
         }
 
         .logo-area {
@@ -226,44 +294,40 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         .main-content {
             flex: 1;
-            padding: 30px;
             height: 100vh;
             overflow: hidden;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease-out;
+            flex-shrink: 0;
         }
 
         .page-title-container {
             display: flex;
-            align-items: center;
-            gap: 20px;
+            flex-direction: column;
+            gap: 5px;
         }
 
         .page-title {
             font-size: 28px;
             font-weight: 600;
             color: white;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .welcome-message {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 400;
             color: var(--light-text);
             opacity: 0.9;
@@ -275,447 +339,583 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         .btn {
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
             border: none;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
             transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 8px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background: var(--primary-color);
+            background: rgba(52, 152, 219, 0.9);
             color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
         }
 
         .btn-primary:hover {
-            background: var(--primary-dark);
+            background: rgba(52, 152, 219, 1);
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
         }
 
         .btn-logout {
-            background: rgba(231, 76, 60, 0.2);
-            color: var(--light-text);
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
         }
 
         .btn-logout:hover {
-            background: rgba(231, 76, 60, 0.3);
+            background: rgba(231, 76, 60, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
         }
 
-        .stats-cards {
+        .welcome-banner {
+            background: var(--gradient-card);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--info-gradient);
+        }
+
+        .welcome-banner h2 {
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        .welcome-banner p {
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Enhanced Stats Cards */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-            height: 0; /* Empty, so collapse */
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+            flex-shrink: 0;
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 25px;
+            background: var(--gradient-card);
+            border-radius: var(--border-radius);
+            padding: 20px;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: var(--card-hover-shadow);
         }
 
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+        .stat-card.coupons::before {
+            background: var(--gold-gradient);
+        }
+
+        .stat-card.available::before {
+            background: var(--success-gradient);
+        }
+
+        .stat-card.announcements::before {
+            background: var(--info-gradient);
+        }
+
+        .stat-card.feedback::before {
+            background: var(--warning-gradient);
+        }
+
+        .stat-info {
+            flex: 1;
         }
 
         .stat-title {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: 600;
-            color: #7f8c8d;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 3px;
+        }
+
+        .stat-change {
+            font-size: 11px;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-weight: 600;
         }
 
         .stat-icon {
             width: 50px;
             height: 50px;
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
-        .bg-warning {
-            background: rgba(243, 156, 18, 0.2);
-            color: var(--warning-color);
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255,255,255,0.1),
+                transparent
+            );
+            animation: shimmer 3s infinite;
         }
 
-        .bg-success {
-            background: rgba(46, 204, 113, 0.2);
-            color: var(--accent-color);
+        .stat-icon.coupons {
+            background: var(--gold-gradient);
         }
 
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 5px;
+        .stat-icon.available {
+            background: var(--success-gradient);
         }
 
-        .stat-change {
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .stat-icon.announcements {
+            background: var(--info-gradient);
         }
 
-        .positive {
-            color: var(--accent-color);
+        .stat-icon.feedback {
+            background: var(--warning-gradient);
         }
 
         .content-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: var(--card-shadow);
-        }
-
-        .summary-section {
+            background: var(--gradient-card);
+            border-radius: var(--border-radius);
             padding: 20px;
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--dark-text);
-            height: 120px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 100%;
             overflow: hidden;
-        }
-
-        .summary-section h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--secondary-color);
+            display: flex;
+            flex-direction: column;
         }
 
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background: var(--info-gradient);
         }
 
         .section-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+            font-size: 16px;
         }
 
         .view-all-link {
             color: var(--primary-color);
             text-decoration: none;
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 3px;
             transition: var(--transition);
+            font-weight: 600;
         }
 
         .view-all-link:hover {
-            color: var(--primary-dark);
+            color: var(--secondary-color);
+            transform: translateX(3px);
         }
 
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Enhanced Feedback Section */
         .feedback-list {
             list-style: none;
-            height: 360px;
-            overflow: hidden;
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .feedback-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .feedback-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .feedback-list::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
         }
 
         .feedback-item {
             display: flex;
+            align-items: center;
             padding: 15px 0;
             border-bottom: 1px solid #eee;
+            transition: var(--transition);
         }
 
         .feedback-item:last-child {
             border-bottom: none;
         }
 
+        .feedback-item:hover {
+            background: rgba(52, 152, 219, 0.05);
+            margin: 0 -15px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
         .feedback-date {
             width: 60px;
             text-align: center;
-            margin-right: 20px;
+            margin-right: 15px;
+            background: var(--gradient-card);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
         }
 
         .feedback-day {
             display: block;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--secondary-color);
+            line-height: 1;
         }
 
         .feedback-month {
             display: block;
-            font-size: 14px;
+            font-size: 10px;
             text-transform: uppercase;
+            color: #6c757d;
+            letter-spacing: 0.5px;
+            margin-top: 3px;
         }
 
         .feedback-details {
             flex: 1;
+            min-width: 0;
         }
 
         .feedback-title {
             font-weight: 600;
             margin-bottom: 5px;
+            color: var(--secondary-color);
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .feedback-category {
-            font-size: 14px;
-            color: #7f8c8d;
+            font-size: 12px;
+            color: #6c757d;
             display: flex;
             align-items: center;
             gap: 5px;
+            margin-bottom: 3px;
         }
 
         .feedback-status {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-top: 5px;
+            font-size: 11px;
+            color: var(--primary-color);
+            font-weight: 600;
+            text-transform: capitalize;
         }
 
-        .mini-chart {
-            display: flex;
-            justify-content: space-between;
-            height: 120px;
-            align-items: flex-end;
-        }
-
-        .chart-bar {
+        .feedback-empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6c757d;
             flex: 1;
-            background: var(--primary-color);
-            border-radius: 5px 5px 0 0;
-            position: relative;
-            margin: 0 5px;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: center;
             align-items: center;
         }
 
-        .chart-value {
-            position: absolute;
-            top: -25px;
-            font-size: 14px;
-            font-weight: bold;
+        .feedback-empty i {
+            font-size: 36px;
+            margin-bottom: 10px;
+            opacity: 0.5;
         }
 
-        .chart-label {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #7f8c8d;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* Two columns: feedback and announcement */
-            gap: 20px;
-            height: calc(100% - 210px); /* Fit within main-content minus header (90px) and summary (120px) */
-            overflow: hidden;
-        }
-
-        .feedback-section {
-            height: 420px; /* Fixed height to fit */
-        }
-
+        /* Enhanced Announcement Card */
         .announcement-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 20px;
+            background: var(--gradient-card);
+            border-radius: var(--border-radius);
+            padding: 0;
             box-shadow: var(--card-shadow);
-            height: 420px; /* Match feedback-section */
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
             overflow: hidden;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            gap: 15px; /* Space between image, title, and description */
+            height: 100%;
+        }
+
+        .announcement-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--info-gradient);
         }
 
         .announcement-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .card-image-container {
+            position: relative;
+            height: 140px;
+            overflow: hidden;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            flex-shrink: 0;
         }
 
         .card-image {
             width: 100%;
-            height: 65%; /* Slightly bigger than previous 60% */
-            border-radius: 8px;
-            display: block;
-            object-fit: cover; /* Fill space, may crop */
-            margin: 0 0 15px; /* Spacing below image */
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .card-image:hover {
+            transform: scale(1.05);
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 15px;
+            font-size: 10px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         .card-title {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 600;
-            color: var(--dark-text);
+            color: var(--secondary-color);
             margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .card-description {
-            font-size: 14px;
-            color: #7f8c8d;
+            font-size: 13px;
+            color: #6c757d;
             line-height: 1.5;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            flex: 1;
             display: -webkit-box;
-            -webkit-line-clamp: 2; /* Limit to 2 lines */
+            -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            display: none;
-        }
-
-        .modal {
-            background: white;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 90vh;
-            box-shadow: var(--card-shadow);
-            animation: modalFadeIn 0.3s ease-out;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
+        .card-footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
         }
 
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
-        }
-
-        .modal-body {
-            padding: 20px;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-
-        .modal-footer {
-            padding: 15px 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .view-modal-content {
-            margin-bottom: 15px;
-        }
-
-        .view-modal-label {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--secondary-color);
-        }
-
-        .view-modal-value {
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
+        .read-more-btn {
+            background: var(--info-gradient);
             color: white;
-            z-index: 1100;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
-            box-shadow: var(--card-shadow);
-            animation: slideIn 0.3s ease-out;
+            gap: 4px;
+            transition: var(--transition);
         }
 
-        .notification.success {
-            background-color: var(--accent-color);
+        .read-more-btn:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
         }
 
-        .notification.error {
-            background-color: var(--danger-color);
+        .announcement-empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6c757d;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        .announcement-empty i {
+            font-size: 36px;
+            margin-bottom: 10px;
+            opacity: 0.5;
         }
 
-        .employee-view {
-            display: block;
-        }
-
-        .admin-view {
-            display: none;
+        /* Responsive Design */
+        @media (max-width: 1400px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         @media (max-width: 992px) {
             .dashboard-container {
                 flex-direction: column;
                 height: 100vh;
-                overflow: hidden;
             }
 
             .sidebar {
                 width: 100%;
                 height: auto;
-                padding: 15px 0;
+                position: fixed;
+                bottom: 0;
+                z-index: 1000;
+                padding: 10px 0;
+                flex-shrink: 0;
             }
 
-            .logo-area {
-                display: none;
-            }
-
-            .user-info {
+            .logo-area, .user-info {
                 display: none;
             }
 
@@ -733,14 +933,14 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 border-left: none;
                 border-top: 4px solid transparent;
                 flex-direction: column;
-                padding: 10px 15px;
-                font-size: 12px;
+                padding: 8px 12px;
+                font-size: 11px;
             }
 
             .nav-link i {
                 margin-right: 0;
-                margin-bottom: 5px;
-                font-size: 16px;
+                margin-bottom: 3px;
+                font-size: 14px;
             }
 
             .nav-link:hover, .nav-link.active {
@@ -749,42 +949,33 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
 
             .main-content {
-                height: 100vh;
-                padding: 20px;
+                margin-bottom: 70px;
+                padding: 15px;
+                height: calc(100vh - 70px);
             }
 
             .dashboard-grid {
-                grid-template-columns: 1fr; /* Stack on smaller screens */
-                height: calc(100% - 180px); /* Adjust for header (80px) and summary (100px) */
+                grid-template-columns: 1fr;
             }
 
-            .feedback-list {
-                height: 300px;
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
             }
 
-            .feedback-section {
-                height: 360px;
+            .stat-card {
+                padding: 15px;
+                gap: 10px;
             }
 
-            .announcement-card {
-                height: 360px;
+            .stat-value {
+                font-size: 20px;
             }
 
-            .card-image {
-                height: 55%; /* Slightly bigger than previous 50% */
-            }
-
-            .card-description {
-                -webkit-line-clamp: 2; /* Maintain 2 lines */
-            }
-
-            .modal {
-                width: 95%;
-                max-height: 85vh;
-            }
-
-            .modal-overlay {
-                padding: 10px;
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
             }
         }
 
@@ -792,52 +983,40 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
             .header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
-                margin-bottom: 20px;
-            }
-
-            .page-title-container {
-                flex-direction: column;
-                align-items: flex-start;
                 gap: 10px;
             }
 
             .header-actions {
                 width: 100%;
-                justify-content: space-between;
+                justify-content: flex-end;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
 
             .dashboard-grid {
-                grid-template-columns: 1fr;
-                height: calc(100% - 170px);
+                gap: 15px;
             }
 
-            .summary-section {
-                height: 100px;
+            .page-title {
+                font-size: 24px;
             }
 
-            .feedback-list {
-                height: 280px;
+            .welcome-message {
+                font-size: 14px;
             }
 
-            .feedback-section {
-                height: 340px;
-            }
-
-            .announcement-card {
-                height: 340px;
-            }
-
-            .card-image {
-                height: 55%; /* Slightly bigger than previous 50% */
-            }
-
-            .card-description {
-                -webkit-line-clamp: 2; /* Maintain 2 lines */
-            }
-
-            .modal-body {
+            .welcome-banner {
                 padding: 15px;
+            }
+
+            .welcome-banner h2 {
+                font-size: 18px;
+            }
+
+            .welcome-banner p {
+                font-size: 13px;
             }
         }
     </style>
@@ -860,33 +1039,39 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="employee_dashboard.php" class="nav-link active" aria-label="Dashboard">
+                    <a href="employee_dashboard.php" class="nav-link active">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
-                <li class="nav-header employee-view">Employee Tools</li>
-                <li class="nav-item employee-view">
-                    <a href="employee_news.php" class="nav-link" aria-label="Announcements">
+                <li class="nav-header">Employee Tools</li>
+                <li class="nav-item">
+                    <a href="employee_news.php" class="nav-link">
                         <i class="fas fa-bullhorn"></i>
                         <span>Announcements</span>
                     </a>
                 </li>
-                <li class="nav-item employee-view">
-                    <a href="my-coupons.php" class="nav-link" aria-label="My Coupons">
+                <li class="nav-item">
+                    <a href="employee_content.php" class="nav-link">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Company Content</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="my-coupons.php" class="nav-link">
                         <i class="fas fa-ticket-alt"></i>
                         <span>My Coupons</span>
                     </a>
                 </li>
                 <li class="nav-header">Support</li>
                 <li class="nav-item">
-                    <a href="feedback.php" class="nav-link" aria-label="Feedback">
+                    <a href="emp_feedback.php" class="nav-link">
                         <i class="fas fa-comment-dots"></i>
                         <span>Feedback</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="profile.php" class="nav-link" aria-label="Profile">
+                    <a href="emp_profile.php" class="nav-link">
                         <i class="fas fa-user-circle"></i>
                         <span>Profile</span>
                     </a>
@@ -898,48 +1083,104 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <main class="main-content">
             <div class="header">
                 <div class="page-title-container">
-                    <h1 class="page-title">Employee Dashboard</h1>
-                    <span class="welcome-message">Welcome, <?php echo htmlspecialchars($userData['name']); ?></span>
+                    <h1 class="page-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Employee Dashboard
+                    </h1>
+                    <span class="welcome-message">Welcome back, <?php echo htmlspecialchars($userData['name']); ?>!</span>
                 </div>
                 <div class="header-actions">
-                    <a href="logout.php" class="btn btn-logout" aria-label="Logout">
+                    <a href="logout.php" class="btn btn-logout">
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Logout</span>
                     </a>
                 </div>
             </div>
-            
-            <!-- Summary Section -->
-            <div class="content-section summary-section">
-                <p>🌐 Our mini portal is the central hub for employees of our Tunisian telecom company. It brings everything together in one place — from managing 🎟️ coupons, to sharing 💬 feedback, and staying up to date with 📢 announcements. Built for simplicity and connection, the portal makes daily tasks easier and keeps everyone engaged.</p>
+
+            <div class="welcome-banner">
+                <h2>Your Employee Portal</h2>
+                <p>Your central hub for managing coupons, staying updated with announcements, sharing feedback, and accessing company resources.</p>
             </div>
             
-            <!-- Stats Cards (Removed My Coupons and System Health widgets) -->
-            <div class="stats-cards">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card coupons" onclick="window.location.href='my-coupons.php'">
+                    <div class="stat-info">
+                        <div class="stat-title">My Coupons</div>
+                        <div class="stat-value"><?php echo $my_coupons; ?></div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i>
+                            Redeemed
+                        </div>
+                    </div>
+                    <div class="stat-icon coupons">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card available" onclick="window.location.href='my-coupons.php'">
+                    <div class="stat-info">
+                        <div class="stat-title">Available Coupons</div>
+                        <div class="stat-value"><?php echo $available_coupons; ?></div>
+                        <div class="stat-change">
+                            <i class="fas fa-gift"></i>
+                            Active
+                        </div>
+                    </div>
+                    <div class="stat-icon available">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card announcements" onclick="window.location.href='employee_news.php'">
+                    <div class="stat-info">
+                        <div class="stat-title">New Announcements</div>
+                        <div class="stat-value"><?php echo $recent_announcements; ?></div>
+                        <div class="stat-change">
+                            <i class="fas fa-clock"></i>
+                            This Week
+                        </div>
+                    </div>
+                    <div class="stat-icon announcements">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card feedback" onclick="window.location.href='emp_feedback.php'">
+                    <div class="stat-info">
+                        <div class="stat-title">My Feedback</div>
+                        <div class="stat-value"><?php echo $my_feedback_count; ?></div>
+                        <div class="stat-change">
+                            <i class="fas fa-comments"></i>
+                            Submitted
+                        </div>
+                    </div>
+                    <div class="stat-icon feedback">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                </div>
             </div>
             
             <!-- Dashboard Grid -->
             <div class="dashboard-grid">
                 <!-- My Recent Feedback Section -->
-                <div class="content-section feedback-section">
+                <div class="content-section">
                     <div class="section-header">
-                        <h2 class="section-title">My Recent Feedback</h2>
-                        <a href="feedback.php" class="view-all-link">
+                        <h2 class="section-title">
+                            <i class="fas fa-comment-alt"></i>
+                            My Recent Feedback
+                        </h2>
+                        <a href="emp_feedback.php" class="view-all-link">
                             View All <i class="fas fa-chevron-right"></i>
                         </a>
                     </div>
                     <ul class="feedback-list">
                         <?php if (empty($my_feedback_list)): ?>
-                            <li class="feedback-item">
-                                <div class="feedback-date">
-                                    <span class="feedback-day">No</span>
-                                    <span class="feedback-month">Data</span>
-                                </div>
-                                <div class="feedback-details">
-                                    <div class="feedback-title">No feedback submitted yet</div>
-                                    <div class="feedback-category">
-                                        <i class="far fa-comment"></i> None
-                                    </div>
+                            <li class="feedback-empty">
+                                <i class="fas fa-comment-slash"></i>
+                                <div>
+                                    <h4>No feedback submitted yet</h4>
+                                    <p>Share your thoughts and help us improve!</p>
                                 </div>
                             </li>
                         <?php else: ?>
@@ -952,7 +1193,8 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <div class="feedback-details">
                                         <div class="feedback-title"><?php echo htmlspecialchars($feedback['subject']); ?></div>
                                         <div class="feedback-category">
-                                            <i class="far fa-comment"></i> <?php echo htmlspecialchars($feedback['category']); ?>
+                                            <i class="fas fa-tag"></i>
+                                            <?php echo htmlspecialchars($feedback['category']); ?>
                                         </div>
                                         <div class="feedback-status">
                                             Status: <?php echo ucfirst(htmlspecialchars($feedback['status'])); ?>
@@ -965,23 +1207,48 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 
                 <!-- Recent Announcement Card -->
-                <div class="announcement-card">
-                    <?php if (!empty($announcement) && !empty($announcement['image_path']) && file_exists($announcement['image_path'])): ?>
-                        <img src="<?php echo htmlspecialchars($announcement['image_path']) . '?v=' . time(); ?>" alt="Announcement Image" class="card-image">
+                <div class="announcement-card" onclick="window.location.href='employee_news.php'">
+                    <?php if (!empty($announcement)): ?>
+                        <div class="card-image-container">
+                            <?php if (!empty($announcement['image_path']) && file_exists($announcement['image_path'])): ?>
+                                <img src="<?php echo htmlspecialchars($announcement['image_path']) . '?v=' . time(); ?>" alt="Announcement Image" class="card-image">
+                            <?php else: ?>
+                                <div class="card-image" style="background: var(--gradient-stats); display: flex; align-items: center; justify-content: center; color: white; font-size: 36px;">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                            <?php endif; ?>
+                            <div class="image-overlay">
+                                <i class="fas fa-newspaper"></i>
+                                Latest
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">
+                                <?php echo htmlspecialchars($announcement['title']); ?>
+                            </div>
+                            <div class="card-description">
+                                <?php echo htmlspecialchars($announcement['description']); ?>
+                            </div>
+                            <div class="card-footer">
+                                <span style="font-size: 12px; color: #6c757d;">
+                                    <i class="fas fa-clock"></i>
+                                    Latest News
+                                </span>
+                                <button class="read-more-btn">
+                                    <i class="fas fa-arrow-right"></i>
+                                    Read More
+                                </button>
+                            </div>
+                        </div>
                     <?php else: ?>
-                        <img src="path/to/placeholder-image.jpg" alt="No Announcement Image" class="card-image">
+                        <div class="announcement-empty">
+                            <i class="fas fa-bullhorn"></i>
+                            <div>
+                                <h4>No announcements available</h4>
+                                <p>Check back later for company updates!</p>
+                            </div>
+                        </div>
                     <?php endif; ?>
-                    <div class="card-title">
-                        <?php echo empty($announcement) ? 'No announcements available' : htmlspecialchars($announcement['title']); ?>
-                    </div>
-                    <div class="card-description">
-                        <?php 
-                        $description = empty($announcement) || empty($announcement['description']) 
-                            ? 'No description available.' 
-                            : htmlspecialchars(substr($announcement['description'], 0, 100)) . (strlen($announcement['description']) > 100 ? '...' : '');
-                        echo $description;
-                        ?>
-                    </div>
                 </div>
             </div>
         </main>
@@ -1003,22 +1270,6 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 loadProfilePicture(userData.profile_picture, userAvatar, nameInitial);
             }
 
-            document.querySelector('.btn-logout').addEventListener('click', function() {
-                if (confirm('Are you sure you want to logout?')) {
-                    localStorage.removeItem('currentUser');
-                    window.location.href = 'logout.php';
-                }
-            });
-
-            // Make announcement card clickable
-            const announcementCard = document.querySelector('.announcement-card');
-            if (announcementCard) {
-                announcementCard.style.cursor = 'pointer';
-                announcementCard.addEventListener('click', function() {
-                    window.location.href = 'employee_news.php';
-                });
-            }
-
             function loadProfilePicture(imagePath, avatarElement, nameInitial) {
                 const img = new Image();
                 img.onload = function() {
@@ -1035,6 +1286,37 @@ $my_feedback_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 };
                 img.src = imagePath;
             }
+
+            // Add hover effects to stat cards
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    const icon = this.querySelector('.stat-icon');
+                    if (icon) {
+                        icon.style.animation = 'pulse 1s infinite';
+                    }
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    const icon = this.querySelector('.stat-icon');
+                    if (icon) {
+                        icon.style.animation = '';
+                    }
+                });
+            });
+
+            // Logout handler
+            document.querySelector('.btn-logout').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Are you sure you want to logout?')) {
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'logout.php';
+                }
+            });
+
+            // Add staggered animation to feedback items
+            document.querySelectorAll('.feedback-item').forEach((item, index) => {
+                item.style.animation = `slideInLeft 0.6s ease-out ${0.1 * index}s both`;
+            });
         });
     </script>
 </body>

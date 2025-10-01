@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 24, 2025 at 07:36 PM
+-- Generation Time: Sep 26, 2025 at 02:43 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -50,7 +50,8 @@ INSERT INTO `announcements` (`announcement_id`, `title`, `content`, `created_by`
 ('68d1447be1c09', 'Telcom anniversary ', '40th year', 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-22 12:43:39', '2025-09-22 12:43:39', 1, '2025-09-22 12:43:39', NULL, 'medium', '68d1447be1a8e_1758545019.png', 'uploads/announcements/68d1447be1a8e_1758545019.png'),
 ('68d42305a8c24', 'Service Upgrade', 'Tunisie Telecom is proud to announce a major upgrade to our fiber-optic network, delivering even faster and more reliable internet speeds to households across Tunisia.', 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-24 16:57:41', '2025-09-24 16:57:41', 1, '2025-09-24 16:57:41', NULL, 'medium', '68d42305a8afe_1758733061.webp', 'uploads/announcements/68d42305a8afe_1758733061.webp'),
 ('68d4234b2503c', 'New Package Launch', 'Enjoy unlimited calls, ultra-fast internet, and exclusive roaming benefits with our new TT Max+ package. Available now at all Tunisie Telecom branches', 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-24 16:58:51', '2025-09-24 16:58:51', 1, '2025-09-24 16:58:51', NULL, 'medium', '68d4234b24f22_1758733131.jpeg', 'uploads/announcements/68d4234b24f22_1758733131.jpeg'),
-('68d423b1ece72', 'Seasonal Promotion', 'Stay connected this school season with our discounted student bundles. Fast internet, affordable rates, and special offers just for students', 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-24 17:00:33', '2025-09-24 17:00:33', 1, '2025-09-24 17:00:33', NULL, 'medium', '68d423b1ecd5c_1758733233.jpeg', 'uploads/announcements/68d423b1ecd5c_1758733233.jpeg');
+('68d423b1ece72', 'Seasonal Promotion', 'Stay connected this school season with our discounted student bundles. Fast internet, affordable rates, and special offers just for students', 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-24 17:00:33', '2025-09-24 17:00:33', 1, '2025-09-24 17:00:33', NULL, 'medium', '68d423b1ecd5c_1758733233.jpeg', 'uploads/announcements/68d423b1ecd5c_1758733233.jpeg'),
+('68d462a61d8db', 'OH!!MEAGA', 'Tunisie Telecom – Oh!Mega Packages\r\nDiscover the new Oh!Mega offers from Tunisie Telecom, designed to keep you connected at the best prices. Enjoy high-speed mobile internet with flexible data packages tailored to your needs:\r\n\r\n7 GB for only 19 DT\r\n\r\n25 GB for only 29 DT\r\n\r\n40 GB for only 49 DT\r\n\r\nStay connected, browse, stream, and share without limits – all with Tunisie Telecom, your trusted partner in digital connectivity.', 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-24 21:29:10', '2025-09-24 21:29:10', 1, '2025-09-24 21:29:10', NULL, 'medium', '68d462a61d7e6_1758749350.png', 'uploads/announcements/68d462a61d7e6_1758749350.png');
 
 -- --------------------------------------------------------
 
@@ -90,7 +91,9 @@ INSERT INTO `content` (`content_id`, `title`, `body`, `file_name`, `file_path`, 
 
 CREATE TABLE `coupons` (
   `coupon_id` varchar(36) NOT NULL,
+  `redeem_code` varchar(50) DEFAULT NULL,
   `description` text DEFAULT NULL,
+  `coupon_code` varchar(50) NOT NULL,
   `partner_name` varchar(255) NOT NULL,
   `discount_rate` decimal(5,2) NOT NULL CHECK (`discount_rate` > 0 and `discount_rate` <= 100),
   `expiry_date` date NOT NULL,
@@ -103,8 +106,11 @@ CREATE TABLE `coupons` (
 -- Dumping data for table `coupons`
 --
 
-INSERT INTO `coupons` (`coupon_id`, `description`, `partner_name`, `discount_rate`, `expiry_date`, `usage_count`, `issued_by`, `created_at`) VALUES
-('coup237', 'discount', 'espin', 10.00, '2025-10-12', 0, 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-22 13:10:33');
+INSERT INTO `coupons` (`coupon_id`, `redeem_code`, `description`, `coupon_code`, `partner_name`, `discount_rate`, `expiry_date`, `usage_count`, `issued_by`, `created_at`) VALUES
+('xxxxx', 'xxxxx', 'bdyjfjy', 'xxxxx', 'ngfjyf', 50.00, '2025-09-29', 1, 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-26 12:32:25'),
+('xxxxxxxxx', 'xxxxxxxxx', 'sdvsedcv', '', 'edcedas', 12.00, '2025-10-12', 1, 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-26 11:24:09'),
+('xxxxxxxxxx', 'xxxxxxxxxx', 'yg79g08hh', '', 'espin', 33.00, '2025-10-12', 1, 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-26 11:09:58'),
+('xxxxxxxxxxxxxx', 'xxxxxxxxxxxxxx', 'u6j6uum', '', 'mytk', 20.00, '2025-10-12', 0, 'f48e7132-9284-409a-96ea-6af8d5605a1d', '2025-09-26 11:10:48');
 
 -- --------------------------------------------------------
 
@@ -116,8 +122,18 @@ CREATE TABLE `coupon_redemptions` (
   `redemption_id` varchar(36) NOT NULL,
   `coupon_id` varchar(36) NOT NULL,
   `employee_id` varchar(36) NOT NULL,
-  `redeemed_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `redeemed_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `coupon_code` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `coupon_redemptions`
+--
+
+INSERT INTO `coupon_redemptions` (`redemption_id`, `coupon_id`, `employee_id`, `redeemed_at`, `coupon_code`) VALUES
+('a658c647-9ac9-11f0-ad8c-7008941025b2', 'xxxxxxxxxx', 'e9ae41c2-8e60-41a1-9eee-f617aaafc824', '2025-09-26 11:12:11', ''),
+('af82de8a-9ad4-11f0-ad8c-7008941025b2', 'xxxxxxxxx', 'e9ae41c2-8e60-41a1-9eee-f617aaafc824', '2025-09-26 12:31:11', 'xxxxxxxxx'),
+('edbf2620-9ad4-11f0-ad8c-7008941025b2', 'xxxxx', 'e9ae41c2-8e60-41a1-9eee-f617aaafc824', '2025-09-26 12:32:55', 'xxxxx');
 
 -- --------------------------------------------------------
 
@@ -136,6 +152,16 @@ CREATE TABLE `feedback` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `feedback`
+--
+
+INSERT INTO `feedback` (`feedback_id`, `employee_id`, `subject`, `message`, `category`, `status`, `created_at`, `updated_at`) VALUES
+('fb_68d43680bba1f2.15153050', 'e9ae41c2-8e60-41a1-9eee-f617aaafc824', 'wronge values', 'fjlfnklknfkec', 'complaint', 'open', '2025-09-24 18:20:48', '2025-09-24 18:20:48'),
+('fb_68d4684ded28b7.84701180', 'e9ae41c2-8e60-41a1-9eee-f617aaafc824', 'lhlh', 'jguob', 'other', 'open', '2025-09-24 21:53:17', '2025-09-24 21:53:17'),
+('fb_68d4685b195158.60603604', 'e9ae41c2-8e60-41a1-9eee-f617aaafc824', 'kjjkubb', 'ygouvu', 'question', 'open', '2025-09-24 21:53:31', '2025-09-24 21:53:31'),
+('fb_68d46881dc7150.16115330', 'e9ae41c2-8e60-41a1-9eee-f617aaafc824', 'jbjlblj', 'lblibl', 'complaint', 'open', '2025-09-24 21:54:09', '2025-09-24 21:54:09');
+
 -- --------------------------------------------------------
 
 --
@@ -149,6 +175,13 @@ CREATE TABLE `feedback_responses` (
   `message` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `feedback_responses`
+--
+
+INSERT INTO `feedback_responses` (`response_id`, `feedback_id`, `admin_id`, `message`, `created_at`) VALUES
+('resp_68d466cfb47376.62195030', 'fb_68d43680bba1f2.15153050', 'f48e7132-9284-409a-96ea-6af8d5605a1d', 'no its a true values', '2025-09-24 21:46:55');
 
 -- --------------------------------------------------------
 
@@ -174,7 +207,7 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`user_id`, `name`, `email`, `department`, `role`, `password`, `profile_picture`, `created_at`, `updated_at`) VALUES
 ('66352c35-4157-49d2-900f-6f9a74d9b26e', 'sajed', 'sajed@company.com', NULL, 'admin', '$2y$10$pDF55Q7yXdkIuO3wUQocKOq/q7nhHG5.9fpSae5oJTNi6oVCpUKVC', NULL, '2025-09-23 15:57:15', '2025-09-23 15:57:46'),
-('e9ae41c2-8e60-41a1-9eee-f617aaafc824', 'ilyass', 'ilyasse@company.com', NULL, 'employee', '$2y$10$5vjnhcnn5wUlEGUy5ye8BeZwLbFuchYjz9ELewYzBBqhWr5OksEJq', NULL, '2025-09-24 15:12:20', '2025-09-24 15:12:20'),
+('e9ae41c2-8e60-41a1-9eee-f617aaafc824', 'ilyass', 'ilyasse@company.com', NULL, 'employee', '$2y$10$5vjnhcnn5wUlEGUy5ye8BeZwLbFuchYjz9ELewYzBBqhWr5OksEJq', 'uploads/profile_pictures/original/e9ae41c2-8e60-41a1-9eee-f617aaafc824_1758740929_68d441c152f4d.jpg', '2025-09-24 15:12:20', '2025-09-24 19:08:49'),
 ('f48e7132-9284-409a-96ea-6af8d5605a1d', 'ilyass chakroun', 'ilyass@company.com', 'develpment', 'admin', '$2y$10$h/.6jtRYxIAI9/ARFDtmO.9l1.eP/1c0OM7yGGt2Mwk1MStOztKcG', 'uploads/profile_pictures/original/f48e7132-9284-409a-96ea-6af8d5605a1d_1758726279_68d40887b7faa.png', '2025-09-22 12:38:48', '2025-09-24 15:04:39');
 
 --
@@ -200,6 +233,7 @@ ALTER TABLE `content`
 --
 ALTER TABLE `coupons`
   ADD PRIMARY KEY (`coupon_id`),
+  ADD UNIQUE KEY `redeem_code` (`redeem_code`),
   ADD KEY `issued_by` (`issued_by`);
 
 --

@@ -12,7 +12,7 @@ session_start();
     <title>TT Dashboard - Coupon Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* CSS styles (original with scrolling removed) */
+        /* CSS styles (same as your original) */
         * {
             margin: 0;
             padding: 0;
@@ -38,7 +38,7 @@ session_start();
             min-height: 100vh;
             color: var(--dark-text);
             position: relative;
-            overflow: hidden; /* Remove all scrolling */
+            overflow: hidden;
         }
 
         body::before {
@@ -178,7 +178,7 @@ session_start();
         .main-content {
             flex: 1;
             padding: 30px;
-            overflow: hidden; /* Remove scrolling from main content */
+            overflow: hidden;
         }
 
         .header {
@@ -247,7 +247,7 @@ session_start();
             margin-bottom: 30px;
             box-shadow: var(--card-shadow);
             animation: fadeIn 0.8s ease-out;
-            overflow: hidden; /* Remove scrolling from content section */
+            overflow: hidden;
         }
 
         .section-header {
@@ -267,7 +267,7 @@ session_start();
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Prevent horizontal scrolling */
+            table-layout: fixed;
         }
 
         .data-table th,
@@ -360,8 +360,8 @@ session_start();
             max-width: 600px;
             box-shadow: var(--card-shadow);
             animation: modalFadeIn 0.3s ease-out;
-            overflow: hidden; /* Remove scrolling from modal */
-            max-height: 90vh; /* Limit modal height */
+            overflow-y: auto;
+            max-height: 80vh;
         }
 
         @keyframes modalFadeIn {
@@ -427,8 +427,7 @@ session_start();
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
-            min-height: 100 Ascending
-            100px;
+            min-height: 100px;
             resize: vertical;
             transition: var(--transition);
         }
@@ -500,7 +499,7 @@ session_start();
             
             .nav-menu {
                 display: flex;
-                white-space: nowrap; /* Prevent text wrapping that could cause horizontal scroll */
+                white-space: nowrap;
             }
             
             .nav-item {
@@ -514,7 +513,7 @@ session_start();
                 flex-direction: column;
                 padding: 10px 15px;
                 font-size: 12px;
-                white-space: nowrap; /* Prevent text wrapping */
+                white-space: nowrap;
             }
             
             .nav-link i {
@@ -548,6 +547,8 @@ session_start();
             .modal-content {
                 padding: 20px;
                 width: 95%;
+                max-height: 80vh;
+                overflow-y: auto;
             }
         }
 
@@ -573,7 +574,7 @@ session_start();
 </head>
 <body>
     <?php
-    // Database connection (using db.php for consistency with users.php)
+    // Database connection
     require_once 'db.php';
 
     // Check if user is logged in and get user_id
@@ -608,18 +609,17 @@ session_start();
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (isset($_POST['create_coupon'])) {
             // Create new coupon
-            $coupon_id = "coup" . sprintf('%03d', rand(1, 999));
+            $redeem_code = $conn->real_escape_string($_POST['redeem_code']);
             $description = $conn->real_escape_string($_POST['description']);
             $partner_name = $conn->real_escape_string($_POST['partner_name']);
             $discount_rate = floatval($_POST['discount_rate']);
             $expiry_date = $conn->real_escape_string($_POST['expiry_date']);
-            $issued_by = $user_id; // Use the logged-in user's ID
+            $issued_by = $user_id;
             
-            $sql = "INSERT INTO coupons (coupon_id, description, partner_name, discount_rate, expiry_date, issued_by) 
-                    VALUES (?, ?, ?, ?, ?, ?)";
-            $result = executeQuery($conn, $sql, [$coupon_id, $description, $partner_name, $discount_rate, $expiry_date, $issued_by]);
+            $sql = "INSERT INTO coupons (coupon_id, redeem_code, description, coupon_code, partner_name, discount_rate, expiry_date, issued_by, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            $result = executeQuery($conn, $sql, [$redeem_code, $redeem_code, $description, $redeem_code, $partner_name, $discount_rate, $expiry_date, $issued_by]);
             
-            // Execute query and redirect
             if ($result['success']) {
                 $_SESSION['success_message'] = "Coupon created successfully!";
                 header("Location: coupons.php");
@@ -633,25 +633,27 @@ session_start();
         elseif (isset($_POST['update_coupon'])) {
             // Update existing coupon
             $coupon_id = $conn->real_escape_string($_POST['coupon_id']);
+            $redeem_code = $conn->real_escape_string($_POST['redeem_code']);
             $description = $conn->real_escape_string($_POST['description']);
             $partner_name = $conn->real_escape_string($_POST['partner_name']);
             $discount_rate = floatval($_POST['discount_rate']);
             $expiry_date = $conn->real_escape_string($_POST['expiry_date']);
             
             $sql = "UPDATE coupons SET 
+                    redeem_code = ?,
+                    coupon_code = ?,
                     description = ?, 
                     partner_name = ?, 
                     discount_rate = ?, 
                     expiry_date = ? 
                     WHERE coupon_id = ?";
-            $result = executeQuery($conn, $sql, [$description, $partner_name, $discount_rate, $expiry_date, $coupon_id]);
+            $result = executeQuery($conn, $sql, [$redeem_code, $redeem_code, $description, $partner_name, $discount_rate, $expiry_date, $coupon_id]);
             
             if ($result['success']) {
                 $_SESSION['success_message'] = "Coupon updated successfully!";
             } else {
                 $_SESSION['error_message'] = "Error updating coupon: " . ($result['error'] ?? $conn->error);
             }
-            // Redirect to avoid resubmission
             header("Location: coupons.php");
             exit();
         } 
@@ -659,11 +661,9 @@ session_start();
             // Delete coupon
             $coupon_id = $conn->real_escape_string($_POST['coupon_id']);
             
-            // First delete any redemptions for this coupon
             $sql = "DELETE FROM coupon_redemptions WHERE coupon_id = ?";
             executeQuery($conn, $sql, [$coupon_id]);
             
-            // Then delete the coupon
             $sql = "DELETE FROM coupons WHERE coupon_id = ?";
             $result = executeQuery($conn, $sql, [$coupon_id]);
             
@@ -672,7 +672,6 @@ session_start();
             } else {
                 $_SESSION['error_message'] = "Error deleting coupon: " . ($result['error'] ?? $conn->error);
             }
-            // Redirect to avoid resubmission
             header("Location: coupons.php");
             exit();
         }
@@ -812,7 +811,7 @@ session_start();
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Coupon Code</th>
+                                <th>Redeem Code</th>
                                 <th>Partner</th>
                                 <th>Discount</th>
                                 <th>Valid Until</th>
@@ -831,13 +830,13 @@ session_start();
                                 if ($expiry_date < $today) {
                                     $status = 'Expired';
                                     $statusClass = 'expired';
-                                } elseif ($coupon['usage_count'] >= 10) { // Assuming a limit of 10 uses
+                                } elseif ($coupon['usage_count'] >= 10) {
                                     $status = 'Limit Reached';
                                     $statusClass = 'draft';
                                 }
                             ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($coupon['coupon_id']); ?></td>
+                                <td><?php echo htmlspecialchars($coupon['redeem_code']); ?></td>
                                 <td><?php echo htmlspecialchars($coupon['partner_name']); ?></td>
                                 <td><?php echo htmlspecialchars($coupon['discount_rate']); ?>%</td>
                                 <td><?php echo date('M j, Y', strtotime($coupon['expiry_date'])); ?></td>
@@ -853,7 +852,7 @@ session_start();
                                     <form method="POST" style="display: inline;">
                                         <input type="hidden" name="coupon_id" value="<?php echo $coupon['coupon_id']; ?>">
                                         <input type="hidden" name="delete_coupon" value="1">
-                                        <button type="submit" class="action-btn btn-delete">
+                                        <button type="submit" class="action-btn btn-delete" onclick="return confirm('Are you sure you want to delete this coupon?')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -882,6 +881,11 @@ session_start();
                     <input type="hidden" name="create_coupon" value="1">
                 <?php endif; ?>
                 
+                <div class="form-group">
+                    <label for="redeem_code" class="form-label">Redeem Code</label>
+                    <input type="text" id="redeem_code" name="redeem_code" class="form-input" 
+                           value="<?php echo isset($edit_coupon) ? htmlspecialchars($edit_coupon['redeem_code']) : ''; ?>" required>
+                </div>
                 <div class="form-group">
                     <label for="partner_name" class="form-label">Partner Name</label>
                     <input type="text" id="partner_name" name="partner_name" class="form-input" 
@@ -921,7 +925,7 @@ session_start();
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Coupon Code</label>
+                    <label class="form-label">Redeem Code</label>
                     <input class="form-input" id="viewCouponId" readonly type="text">
                 </div>
                 <div class="form-group">
@@ -952,23 +956,20 @@ session_start();
     </div>
 
     <script>
-        // Profile picture loading functionality (copied from news.php)
+        // Profile picture loading functionality
         document.addEventListener('DOMContentLoaded', function() {
             const userData = <?php echo json_encode($current_user); ?>;
             const nameInitial = userData.name.charAt(0).toUpperCase();
             const userAvatar = document.getElementById('userAvatar');
             
-            // Load profile picture if exists
             if (userData.profile_picture) {
                 loadProfilePicture(userData.profile_picture, userAvatar, nameInitial);
             } else {
-                // Set initial as fallback
                 userAvatar.textContent = nameInitial;
             }
         });
 
         function loadProfilePicture(imagePath, avatarElement, nameInitial) {
-            // Load image with error handling
             const img = new Image();
             img.onload = function() {
                 avatarElement.style.backgroundImage = `url(${imagePath})`;
@@ -977,7 +978,6 @@ session_start();
                 avatarElement.textContent = '';
             };
             img.onerror = function() {
-                // Fallback to initial
                 avatarElement.style.backgroundImage = '';
                 avatarElement.textContent = nameInitial;
             };
@@ -989,16 +989,13 @@ session_start();
             const currentUser = <?php echo json_encode($current_user); ?>;
             
             if (!currentUser) {
-                // Redirect to login if not authenticated
                 window.location.href = 'login.php';
                 return;
             }
             
-            // Set user info (after profile picture loading)
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userRole').textContent = currentUser.role;
             
-            // Show/hide elements based on user role
             const adminElements = document.querySelectorAll('.admin-view');
             const employeeElements = document.querySelectorAll('.employee-view');
             
@@ -1008,20 +1005,16 @@ session_start();
             } else {
                 adminElements.forEach(el => el.style.display = 'none');
                 employeeElements.forEach(el => el.style.display = 'block');
-                // Disable edit/delete buttons for non-admins
                 document.querySelectorAll('.btn-edit, .btn-delete, #createCouponBtn')
                     .forEach(btn => btn.disabled = true);
             }
             
-            // Set up event listeners
             setupEventListeners();
             
-            // Show modal if editing
             <?php if (isset($_GET['edit'])): ?>
                 document.getElementById('couponModal').style.display = 'flex';
             <?php endif; ?>
             
-            // Auto-hide notifications after 5 seconds
             setTimeout(() => {
                 document.querySelectorAll('.notification').forEach(notification => {
                     notification.style.display = 'none';
@@ -1031,16 +1024,12 @@ session_start();
 
         // Set up event listeners
         function setupEventListeners() {
-            // Create coupon button
             document.getElementById('createCouponBtn').addEventListener('click', showCreateModal);
-            
-            // Modal close buttons
             document.getElementById('closeModal').addEventListener('click', hideModal);
             document.getElementById('cancelBtn').addEventListener('click', hideModal);
             document.getElementById('viewModalClose').addEventListener('click', () => document.getElementById('viewCouponModal').style.display = 'none');
             document.getElementById('viewCancelBtn').addEventListener('click', () => document.getElementById('viewCouponModal').style.display = 'none');
             
-            // View coupon buttons
             document.querySelectorAll('.btn-view').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const couponId = this.dataset.id;
@@ -1048,7 +1037,7 @@ session_start();
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                document.getElementById('viewCouponId').value = data.coupon.coupon_id;
+                                document.getElementById('viewCouponId').value = data.coupon.redeem_code;
                                 document.getElementById('viewPartnerName').value = data.coupon.partner_name;
                                 document.getElementById('viewDescription').value = data.coupon.description;
                                 document.getElementById('viewDiscountRate').value = data.coupon.discount_rate;
@@ -1079,21 +1068,18 @@ session_start();
                 });
             });
             
-            // Logout functionality
             document.getElementById('logoutBtn').addEventListener('click', function() {
-                // Clear session and localStorage
-                localStorage.removeItem('currentUser');
-                sessionStorage.clear();
-                window.location.href = 'login.php';
+                if (confirm('Are you sure you want to logout?')) {
+                    localStorage.removeItem('currentUser');
+                    sessionStorage.clear();
+                    window.location.href = 'logout.php';
+                }
             });
         }
 
         // Show create coupon modal
         function showCreateModal() {
-            // Reset the form
             document.getElementById('couponForm').reset();
-            
-            // Remove any existing hidden inputs
             const hiddenInputs = document.querySelectorAll('#couponForm input[type="hidden"]');
             hiddenInputs.forEach(input => {
                 if (input.name !== 'create_coupon') {
@@ -1101,7 +1087,6 @@ session_start();
                 }
             });
             
-            // Ensure create_coupon hidden input exists
             if (!document.querySelector('input[name="create_coupon"]')) {
                 const createInput = document.createElement('input');
                 createInput.type = 'hidden';
@@ -1110,10 +1095,7 @@ session_start();
                 document.getElementById('couponForm').appendChild(createInput);
             }
             
-            // Set modal title
             document.getElementById('modalTitle').textContent = 'Create Coupon';
-            
-            // Show the modal
             document.getElementById('couponModal').style.display = 'flex';
         }
 
@@ -1125,7 +1107,6 @@ session_start();
         // Hide modal
         function hideModal() {
             document.getElementById('couponModal').style.display = 'none';
-            // If we were editing, redirect to clear the edit parameter
             if (window.location.search.includes('edit=')) {
                 window.location.href = 'coupons.php';
             }
@@ -1134,8 +1115,6 @@ session_start();
 </body>
 </html>
 <?php
-// Close database connection
 $conn->close();
-// Flush output buffer
 ob_end_flush();
 ?>

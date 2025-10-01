@@ -55,19 +55,28 @@ switch ($action) {
         }
         $coupon_id = "coup" . sprintf('%03d', rand(1, 999));
         $description = $conn->real_escape_string($_POST['description'] ?? '');
+        $coupon_code = $conn->real_escape_string($_POST['coupon_code'] ?? '');
         $partner_name = $conn->real_escape_string($_POST['partner_name'] ?? '');
         $discount_rate = floatval($_POST['discount_rate'] ?? 0);
         $expiry_date = $conn->real_escape_string($_POST['expiry_date'] ?? '');
         $issued_by = $user_id;
 
-        if (empty($description) || empty($partner_name) || $discount_rate <= 0 || empty($expiry_date)) {
-            echo json_encode(['success' => false, 'error' => 'Invalid input data.']);
+        if (empty($description) || empty($coupon_code) || empty($partner_name) || $discount_rate <= 0 || empty($expiry_date)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid input data. All fields, including coupon code, are required.']);
             exit();
         }
 
-        $sql = "INSERT INTO coupons (coupon_id, description, partner_name, discount_rate, expiry_date, issued_by, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, NOW())";
-        $result = executeQuery($conn, $sql, [$coupon_id, $description, $partner_name, $discount_rate, $expiry_date, $issued_by]);
+        // Check if coupon_code is unique
+        $sql = "SELECT coupon_id FROM coupons WHERE coupon_code = ?";
+        $result = executeQuery($conn, $sql, [$coupon_code]);
+        if ($result['success'] && $result['result']->fetch_assoc()) {
+            echo json_encode(['success' => false, 'error' => 'Coupon code already exists.']);
+            exit();
+        }
+
+        $sql = "INSERT INTO coupons (coupon_id, description, coupon_code, partner_name, discount_rate, expiry_date, issued_by, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        $result = executeQuery($conn, $sql, [$coupon_id, $description, $coupon_code, $partner_name, $discount_rate, $expiry_date, $issued_by]);
         if ($result['success']) {
             echo json_encode(['success' => true, 'message' => 'Coupon created successfully!', 'coupon_id' => $coupon_id]);
         } else {
@@ -83,17 +92,26 @@ switch ($action) {
         }
         $coupon_id = $conn->real_escape_string($_POST['coupon_id'] ?? '');
         $description = $conn->real_escape_string($_POST['description'] ?? '');
+        $coupon_code = $conn->real_escape_string($_POST['coupon_code'] ?? '');
         $partner_name = $conn->real_escape_string($_POST['partner_name'] ?? '');
         $discount_rate = floatval($_POST['discount_rate'] ?? 0);
         $expiry_date = $conn->real_escape_string($_POST['expiry_date'] ?? '');
 
-        if (empty($coupon_id) || empty($description) || empty($partner_name) || $discount_rate <= 0 || empty($expiry_date)) {
-            echo json_encode(['success' => false, 'error' => 'Invalid input data.']);
+        if (empty($coupon_id) || empty($description) || empty($coupon_code) || empty($partner_name) || $discount_rate <= 0 || empty($expiry_date)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid input data. All fields, including coupon code, are required.']);
             exit();
         }
 
-        $sql = "UPDATE coupons SET description = ?, partner_name = ?, discount_rate = ?, expiry_date = ? WHERE coupon_id = ?";
-        $result = executeQuery($conn, $sql, [$description, $partner_name, $discount_rate, $expiry_date, $coupon_id]);
+        // Check if coupon_code is unique (excluding current coupon)
+        $sql = "SELECT coupon_id FROM coupons WHERE coupon_code = ? AND coupon_id != ?";
+        $result = executeQuery($conn, $sql, [$coupon_code, $coupon_id]);
+        if ($result['success'] && $result['result']->fetch_assoc()) {
+            echo json_encode(['success' => false, 'error' => 'Coupon code already exists.']);
+            exit();
+        }
+
+        $sql = "UPDATE coupons SET description = ?, coupon_code = ?, partner_name = ?, discount_rate = ?, expiry_date = ? WHERE coupon_id = ?";
+        $result = executeQuery($conn, $sql, [$description, $coupon_code, $partner_name, $discount_rate, $expiry_date, $coupon_id]);
         if ($result['success']) {
             echo json_encode(['success' => true, 'message' => 'Coupon updated successfully!']);
         } else {

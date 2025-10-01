@@ -1,10 +1,10 @@
 <?php
-// feedback.php
+// emp_feedback.php
 session_start();
 require_once 'db.php';
 
-// Check if user is authenticated
-if (!isset($_SESSION['currentUser'])) {
+// Check if user is authenticated and is employee
+if (!isset($_SESSION['currentUser']) || $_SESSION['currentUser']['role'] !== 'employee') {
     header('Location: login.php');
     exit;
 }
@@ -18,7 +18,7 @@ $role = $currentUser['role'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback System - Tunisie Telecom</title>
+    <title>Employee Feedback - Tunisie Telecom</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -90,6 +90,21 @@ $role = $currentUser['role'];
             to {
                 opacity: 1;
                 transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
             }
         }
 
@@ -230,6 +245,9 @@ $role = $currentUser['role'];
             font-weight: 600;
             color: white;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .header-actions {
@@ -293,6 +311,40 @@ $role = $currentUser['role'];
             box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
         }
 
+        .welcome-banner {
+            background: var(--gradient-card);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+        }
+
+        .welcome-banner h2 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .welcome-banner p {
+            color: #6c757d;
+            font-size: 16px;
+            margin: 0;
+        }
+
         .content-section {
             background: var(--gradient-card);
             border-radius: var(--border-radius);
@@ -321,7 +373,7 @@ $role = $currentUser['role'];
             left: 0;
             width: 60px;
             height: 2px;
-            background: var(--primary-color);
+            background: var(--accent-color);
         }
 
         .section-title {
@@ -334,7 +386,7 @@ $role = $currentUser['role'];
         }
 
         .section-title i {
-            color: var(--primary-color);
+            color: var(--accent-color);
             font-size: 20px;
         }
 
@@ -355,9 +407,9 @@ $role = $currentUser['role'];
         }
 
         .form-control:focus {
-            border-color: var(--primary-color);
+            border-color: var(--accent-color);
             background: white;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
             outline: none;
         }
 
@@ -380,6 +432,9 @@ $role = $currentUser['role'];
             overflow: hidden;
             animation: slideInLeft 0.6s ease-out;
             animation-fill-mode: both;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
         }
 
         .feedback-card::before {
@@ -389,13 +444,13 @@ $role = $currentUser['role'];
             left: 0;
             width: 100%;
             height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
         }
 
         .feedback-card:hover {
             transform: translateY(-8px);
             box-shadow: var(--card-hover-shadow);
-            border-color: rgba(52, 152, 219, 0.3);
+            border-color: rgba(46, 204, 113, 0.3);
         }
 
         .feedback-card:nth-child(1) { animation-delay: 0.1s; }
@@ -406,31 +461,15 @@ $role = $currentUser['role'];
         .feedback-card:nth-child(6) { animation-delay: 0.6s; }
 
         .feedback-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
             margin-bottom: 15px;
         }
 
         .feedback-title {
             font-size: 18px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             color: var(--secondary-color);
             line-height: 1.3;
-        }
-
-        .feedback-employee {
-            font-size: 13px;
-            color: #6c757d;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .feedback-employee i {
-            color: var(--primary-color);
         }
 
         .feedback-meta {
@@ -450,12 +489,6 @@ $role = $currentUser['role'];
             display: flex;
             align-items: center;
             gap: 5px;
-        }
-
-        .feedback-category {
-            background: linear-gradient(135deg, rgba(52, 152, 219, 0.15), rgba(52, 152, 219, 0.25));
-            color: var(--primary-color);
-            border: 1px solid rgba(52, 152, 219, 0.3);
         }
 
         .category-suggestion {
@@ -481,7 +514,6 @@ $role = $currentUser['role'];
         .feedback-status {
             background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(108, 117, 125, 0.25));
             color: #6c757d;
-            border: 1px solid rgba(108, 117, 125, 0.3);
         }
 
         .status-open {
@@ -504,18 +536,8 @@ $role = $currentUser['role'];
             color: #7f8c8d;
         }
 
-        .feedback-date {
-            font-size: 12px;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(108, 117, 125, 0.1);
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
         .feedback-content {
+            flex-grow: 1;
             margin-bottom: 20px;
             line-height: 1.6;
             color: #495057;
@@ -530,13 +552,29 @@ $role = $currentUser['role'];
             text-overflow: ellipsis;
         }
 
+        .feedback-footer {
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .feedback-date {
+            font-size: 12px;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(108, 117, 125, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
         .feedback-actions {
             display: flex;
             gap: 10px;
-            justify-content: flex-end;
-            align-items: center;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
         }
 
         .btn-small {
@@ -547,12 +585,12 @@ $role = $currentUser['role'];
 
         .btn-outline {
             background: transparent;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
         }
 
         .btn-outline:hover {
-            background: var(--primary-color);
+            background: var(--accent-color);
             color: white;
             transform: translateY(-1px);
         }
@@ -579,25 +617,11 @@ $role = $currentUser['role'];
             box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
         }
 
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.2);
-                opacity: 0.7;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
         .empty-state {
             text-align: center;
             padding: 60px 20px;
             color: #6c757d;
+            grid-column: 1 / -1;
         }
 
         .empty-state i {
@@ -709,7 +733,7 @@ $role = $currentUser['role'];
             left: 0;
             width: 4px;
             height: 100%;
-            background: var(--primary-color);
+            background: var(--accent-color);
             border-radius: 2px 0 0 2px;
         }
 
@@ -821,67 +845,45 @@ $role = $currentUser['role'];
         .text-center { text-align: center; }
         .mt-20 { margin-top: 20px; }
         .mb-20 { margin-bottom: 20px; }
-
-        .admin-view { display: none; }
-        .employee-view { display: none; }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Sidebar -->
+        <!-- Sidebar matching the dashboard file -->
         <aside class="sidebar">
             <div class="logo-area">
                 <img src="logo.png" alt="Tunisie Telecom Logo">
             </div>
             
             <div class="user-info">
-                <div class="user-avatar" id="userAvatar"><?php echo htmlspecialchars($currentUser['name'][0]); ?></div>
+                <div class="user-avatar" id="userAvatar"><?php echo strtoupper(substr($currentUser['name'], 0, 1)); ?></div>
                 <div class="user-details">
-                    <div class="user-name" id="userName"><?php echo htmlspecialchars($currentUser['name']); ?></div>
-                    <div class="user-role" id="userRole"><?php echo htmlspecialchars($currentUser['role']); ?></div>
+                    <div class="user-name"><?php echo htmlspecialchars($currentUser['name']); ?></div>
+                    <div class="user-role"><?php echo htmlspecialchars($currentUser['role']); ?></div>
                 </div>
             </div>
             
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="dashboard.php" class="nav-link">
+                    <a href="employee_dashboard.php" class="nav-link">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
-                <li class="nav-header admin-view">Admin Tools</li>
-                <li class="nav-item admin-view">
-                    <a href="news.php" class="nav-link">
+                <li class="nav-header">Employee Tools</li>
+                <li class="nav-item">
+                    <a href="employee_news.php" class="nav-link">
                         <i class="fas fa-bullhorn"></i>
                         <span>Announcements</span>
                     </a>
                 </li>
-                <li class="nav-item admin-view">
-                    <a href="content.php" class="nav-link">
+                <li class="nav-item">
+                    <a href="employee_content.php" class="nav-link">
                         <i class="fas fa-file-alt"></i>
-                        <span>Content</span>
+                        <span>Company Content</span>
                     </a>
                 </li>
-                <li class="nav-item admin-view">
-                    <a href="coupons.php" class="nav-link">
-                        <i class="fas fa-ticket-alt"></i>
-                        <span>Coupons</span>
-                    </a>
-                </li>
-                <li class="nav-item admin-view">
-                    <a href="users.php" class="nav-link">
-                        <i class="fas fa-users"></i>
-                        <span>Users</span>
-                    </a>
-                </li>
-                <li class="nav-header employee-view">Employee Tools</li>
-                <li class="nav-item employee-view">
-                    <a href="available-coupons.php" class="nav-link">
-                        <i class="fas fa-tags"></i>
-                        <span>Available Coupons</span>
-                    </a>
-                </li>
-                <li class="nav-item employee-view">
+                <li class="nav-item">
                     <a href="my-coupons.php" class="nav-link">
                         <i class="fas fa-ticket-alt"></i>
                         <span>My Coupons</span>
@@ -889,13 +891,13 @@ $role = $currentUser['role'];
                 </li>
                 <li class="nav-header">Support</li>
                 <li class="nav-item">
-                    <a href="feedback.php" class="nav-link active">
+                    <a href="emp_feedback.php" class="nav-link active">
                         <i class="fas fa-comment-dots"></i>
                         <span>Feedback</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="profile.php" class="nav-link">
+                    <a href="emp_profile.php" class="nav-link">
                         <i class="fas fa-user-circle"></i>
                         <span>Profile</span>
                     </a>
@@ -903,17 +905,16 @@ $role = $currentUser['role'];
             </ul>
         </aside>
         
-        <!-- Main Content -->
         <main class="main-content">
             <div class="header">
                 <h1 class="page-title">
-                    <i class="fas fa-comments"></i>
-                    Feedback System
+                    <i class="fas fa-comment-heart"></i>
+                    My Feedback
                 </h1>
                 <div class="header-actions">
-                    <button class="btn btn-primary" id="newFeedbackBtn" style="display: <?php echo $role === 'admin' ? 'none' : 'flex'; ?>;">
+                    <button class="btn btn-primary" id="newFeedbackBtn">
                         <i class="fas fa-plus"></i>
-                        <span>New Feedback</span>
+                        <span>Submit Feedback</span>
                     </button>
                     <button class="btn btn-logout" id="logoutBtn">
                         <i class="fas fa-sign-out-alt"></i>
@@ -921,13 +922,12 @@ $role = $currentUser['role'];
                     </button>
                 </div>
             </div>
-            
-            <!-- Feedback Cards Section -->
+
             <div class="content-section">
                 <div class="section-header">
                     <h2 class="section-title">
-                        <i class="fas fa-layer-group"></i>
-                        <?php echo $role === 'admin' ? 'All' : 'My'; ?> Feedback Items
+                        <i class="fas fa-history"></i>
+                        My Feedback History
                     </h2>
                     <div class="filters-container">
                         <select class="form-control" id="filterCategory">
@@ -940,18 +940,18 @@ $role = $currentUser['role'];
                         <select class="form-control" id="filterStatus">
                             <option value="">All Statuses</option>
                             <option value="open">Open</option>
-                            <option value="in_progress">In Progress
+                            <option value="in_progress">In Progress</option>
                             <option value="resolved">Resolved</option>
                             <option value="closed">Closed</option>
                         </select>
                     </div>
                 </div>
                 
-                <div class="feedback-grid" id="feedbackList">
+                <div class="feedback-grid" id="feedbackGrid">
                     <div class="empty-state">
                         <i class="fas fa-comments"></i>
-                        <h3>Loading feedback...</h3>
-                        <p>Please wait while we fetch your feedback items.</p>
+                        <h3>Loading your feedback...</h3>
+                        <p>Please wait while we fetch your feedback history.</p>
                     </div>
                 </div>
             </div>
@@ -969,7 +969,10 @@ $role = $currentUser['role'];
             
             <form id="feedbackForm">
                 <div class="form-group">
-                    <label class="form-label" for="category">Category</label>
+                    <label class="form-label" for="category">
+                        <i class="fas fa-tag"></i>
+                        Category
+                    </label>
                     <select class="form-control" id="category" required>
                         <option value="">Select a category</option>
                         <option value="suggestion">💡 Suggestion</option>
@@ -980,13 +983,19 @@ $role = $currentUser['role'];
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="subject">Subject</label>
+                    <label class="form-label" for="subject">
+                        <i class="fas fa-heading"></i>
+                        Subject
+                    </label>
                     <input type="text" class="form-control" id="subject" placeholder="Brief summary of your feedback" required>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="message">Message</label>
-                    <textarea class="form-control" id="message" placeholder="Please provide details about your feedback..." required rows="5"></textarea>
+                    <label class="form-label" for="message">
+                        <i class="fas fa-edit"></i>
+                        Message
+                    </label>
+                    <textarea class="form-control" id="message" placeholder="Describe your feedback in detail. Be specific and constructive to help us understand your perspective." required rows="6"></textarea>
                 </div>
                 
                 <div class="form-group" style="text-align: right;">
@@ -1011,44 +1020,6 @@ $role = $currentUser['role'];
             
             <div id="feedbackDetails"></div>
             <div id="responsesList"></div>
-            
-            <?php if ($role === 'admin'): ?>
-            <form id="statusForm" class="mt-20">
-                <div class="form-group">
-                    <label class="form-label" for="updateStatus">
-                        <i class="fas fa-tasks"></i>
-                        Update Status
-                    </label>
-                    <select class="form-control" id="updateStatus">
-                        <option value="open">🔵 Open</option>
-                        <option value="in_progress">🟡 In Progress</option>
-                        <option value="resolved">🟢 Resolved</option>
-                        <option value="closed">⚫ Closed</option>
-                    </select>
-                </div>
-                <div class="form-group" style="text-align: right;">
-                    <button type="submit" class="btn btn-small" style="background: var(--warning-color); color: white;">
-                        <i class="fas fa-sync-alt"></i>
-                        Update Status
-                    </button>
-                </div>
-            </form>
-            <form id="responseForm" class="mt-20">
-                <div class="form-group">
-                    <label class="form-label" for="responseMessage">
-                        <i class="fas fa-reply"></i>
-                        Add Response
-                    </label>
-                    <textarea class="form-control" id="responseMessage" placeholder="Provide your response here..." required rows="4"></textarea>
-                </div>
-                <div class="form-group" style="text-align: right;">
-                    <button type="submit" class="btn btn-small" style="background: var(--accent-color); color: white;">
-                        <i class="fas fa-paper-plane"></i>
-                        Submit Response
-                    </button>
-                </div>
-            </form>
-            <?php endif; ?>
         </div>
     </div>
 
@@ -1057,7 +1028,7 @@ $role = $currentUser['role'];
         const currentUser = <?php echo json_encode($currentUser); ?>;
         
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing feedback system');
+            console.log('DOM loaded, initializing employee feedback system');
             
             // Set profile picture or initial
             const userAvatar = document.getElementById('userAvatar');
@@ -1067,18 +1038,6 @@ $role = $currentUser['role'];
                 loadProfilePicture(currentUser.profile_picture, userAvatar, nameInitial);
             } else {
                 userAvatar.textContent = nameInitial;
-            }
-            
-            // Show/hide elements based on user role
-            const adminElements = document.querySelectorAll('.admin-view');
-            const employeeElements = document.querySelectorAll('.employee-view');
-            
-            if (userRole === 'admin') {
-                adminElements.forEach(el => el.style.display = 'block');
-                employeeElements.forEach(el => el.style.display = 'none');
-            } else {
-                adminElements.forEach(el => el.style.display = 'none');
-                employeeElements.forEach(el => el.style.display = 'block');
             }
             
             // Logout functionality
@@ -1096,12 +1055,10 @@ $role = $currentUser['role'];
             const closeModalBtn = document.getElementById('closeModal');
             const cancelFeedbackBtn = document.getElementById('cancelFeedback');
             
-            if (newFeedbackBtn.style.display !== 'none') {
-                newFeedbackBtn.addEventListener('click', function() {
-                    console.log('New Feedback button clicked');
-                    feedbackModal.style.display = 'flex';
-                });
-            }
+            newFeedbackBtn.addEventListener('click', function() {
+                console.log('New Feedback button clicked');
+                feedbackModal.style.display = 'flex';
+            });
             
             closeModalBtn.addEventListener('click', function() {
                 console.log('Close modal button clicked');
@@ -1192,7 +1149,7 @@ $role = $currentUser['role'];
                 })
                 .then(data => {
                     if (data.success) {
-                        populateFeedbackContainer(data.feedbacks, document.getElementById('feedbackList'));
+                        populateFeedbackGrid(data.feedbacks, document.getElementById('feedbackGrid'));
                     } else {
                         console.error('Error fetching feedback:', data.message);
                         alert('Error fetching feedback: ' + data.message);
@@ -1204,16 +1161,16 @@ $role = $currentUser['role'];
                 });
             }
             
-            // Enhanced populate feedback container with card layout
-            function populateFeedbackContainer(feedbacks, container) {
-                console.log('Populating feedback container with', feedbacks.length, 'items');
+            // Enhanced populate feedback grid with card layout
+            function populateFeedbackGrid(feedbacks, container) {
+                console.log('Populating feedback grid with', feedbacks.length, 'items');
                 
                 if (feedbacks.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <h3>No feedback found</h3>
-                            <p>There are no feedback items matching your current filters.</p>
+                            <i class="fas fa-comment-plus"></i>
+                            <h3>No feedback submitted yet</h3>
+                            <p>Start sharing your thoughts and suggestions with us!</p>
                         </div>
                     `;
                     return;
@@ -1221,67 +1178,61 @@ $role = $currentUser['role'];
                 
                 let html = '';
                 feedbacks.forEach((feedback, index) => {
-                    const employeeHtml = (userRole === 'admin' && feedback.employee_name) ? 
-                        `<div class="feedback-employee">
-                            <i class="fas fa-user"></i>
-                            By ${feedback.employee_name}
-                        </div>` : '';
-                    
                     const categoryText = feedback.category.charAt(0).toUpperCase() + feedback.category.slice(1);
                     const statusText = feedback.status.replace('_', ' ').split(' ').map(word => 
                         word.charAt(0).toUpperCase() + word.slice(1)
                     ).join(' ');
                     
-                    // Determine priority indicator
+                    // Determine priority indicator based on status
                     let priorityClass = '';
-                    if (feedback.category === 'complaint') priorityClass = 'priority-high';
-                    else if (feedback.status === 'in_progress') priorityClass = 'priority-medium';
+                    if (feedback.status === 'resolved') priorityClass = 'priority-indicator';
+                    else if (feedback.category === 'complaint') priorityClass = 'priority-indicator priority-high';
+                    else if (feedback.status === 'in_progress') priorityClass = 'priority-indicator priority-medium';
                     
                     const categoryIcon = {
                         'suggestion': 'fas fa-lightbulb',
-                        'complaint': 'fas fa-exclamation-triangle', 
+                        'complaint': 'fas fa-exclamation-triangle',
                         'question': 'fas fa-question-circle',
                         'other': 'fas fa-file-alt'
                     };
                     
                     const statusIcon = {
                         'open': 'fas fa-circle',
-                        'in_progress': 'fas fa-clock', 
+                        'in_progress': 'fas fa-clock',
                         'resolved': 'fas fa-check-circle',
                         'closed': 'fas fa-times-circle'
                     };
                     
                     html += `
                         <div class="feedback-card" style="animation-delay: ${index * 0.1}s">
-                            ${priorityClass ? `<div class="priority-indicator ${priorityClass}"></div>` : ''}
+                            ${priorityClass ? `<div class="${priorityClass}"></div>` : ''}
                             <div class="feedback-header">
-                                <div>
-                                    <div class="feedback-title">${feedback.subject}</div>
-                                    ${employeeHtml}
-                                    <div class="feedback-meta">
-                                        <span class="feedback-badge category-${feedback.category}">
-                                            <i class="${categoryIcon[feedback.category] || 'fas fa-tag'}"></i>
-                                            ${categoryText}
-                                        </span>
-                                        <span class="feedback-badge feedback-status status-${feedback.status}">
-                                            <i class="${statusIcon[feedback.status] || 'fas fa-circle'}"></i>
-                                            ${statusText}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="feedback-date">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    ${calculateDaysAgo(feedback.created_at)}
+                                <div class="feedback-title">${feedback.subject}</div>
+                                <div class="feedback-meta">
+                                    <span class="feedback-badge category-${feedback.category}">
+                                        <i class="${categoryIcon[feedback.category] || 'fas fa-tag'}"></i>
+                                        ${categoryText}
+                                    </span>
+                                    <span class="feedback-badge feedback-status status-${feedback.status}">
+                                        <i class="${statusIcon[feedback.status] || 'fas fa-circle'}"></i>
+                                        ${statusText}
+                                    </span>
                                 </div>
                             </div>
                             <div class="feedback-content">
                                 <p>${feedback.message}</p>
                             </div>
-                            <div class="feedback-actions">
-                                <button class="btn btn-outline btn-small view-details-btn" data-feedback-id="${feedback.feedback_id}">
-                                    <i class="fas fa-eye"></i>
-                                    View Details
-                                </button>
+                            <div class="feedback-footer">
+                                <div class="feedback-date">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    ${calculateDaysAgo(feedback.created_at)}
+                                </div>
+                                <div class="feedback-actions">
+                                    <button class="btn btn-outline btn-small view-details-btn" data-feedback-id="${feedback.feedback_id}">
+                                        <i class="fas fa-eye"></i>
+                                        View Details
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1299,7 +1250,7 @@ $role = $currentUser['role'];
                 });
             }
             
-            // Calculate days ago
+            // Calculate days ago with enhanced formatting
             function calculateDaysAgo(dateString) {
                 try {
                     const createdDate = new Date(dateString);
@@ -1308,7 +1259,7 @@ $role = $currentUser['role'];
                     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                     
                     if (diffDays === 0) return 'Today';
-                    if (diffDays === 1) return 'Yesterday'; 
+                    if (diffDays === 1) return 'Yesterday';
                     if (diffDays < 7) return `${diffDays} days ago`;
                     if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
                     return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
@@ -1345,7 +1296,7 @@ $role = $currentUser['role'];
                 loadFeedback(document.getElementById('filterCategory').value, this.value);
             });
             
-            // View feedback details
+            // View feedback details function
             function viewFeedbackDetails(feedbackId) {
                 console.log('Fetching details for feedback ID:', feedbackId);
                 if (!feedbackId) {
@@ -1365,12 +1316,6 @@ $role = $currentUser['role'];
                     if (data.success) {
                         console.log('Feedback details received:', data.feedback);
                         const fb = data.feedback;
-                        const employeeHtml = (userRole === 'admin' && fb.employee_name) ? 
-                            `<div class="feedback-employee">
-                                <i class="fas fa-user"></i>
-                                By ${fb.employee_name}
-                            </div>` : '';
-                        
                         const categoryText = fb.category.charAt(0).toUpperCase() + fb.category.slice(1);
                         const statusText = fb.status.replace('_', ' ').split(' ').map(word => 
                             word.charAt(0).toUpperCase() + word.slice(1)
@@ -1379,7 +1324,7 @@ $role = $currentUser['role'];
                         const categoryIcon = {
                             'suggestion': 'fas fa-lightbulb',
                             'complaint': 'fas fa-exclamation-triangle',
-                            'question': 'fas fa-question-circle', 
+                            'question': 'fas fa-question-circle',
                             'other': 'fas fa-file-alt'
                         };
                         
@@ -1392,7 +1337,6 @@ $role = $currentUser['role'];
                         
                         let detailsHtml = `
                             <div class="feedback-title">${fb.subject}</div>
-                            ${employeeHtml}
                             <div class="feedback-meta" style="margin-bottom: 15px;">
                                 <span class="feedback-badge category-${fb.category}">
                                     <i class="${categoryIcon[fb.category] || 'fas fa-tag'}"></i>
@@ -1405,21 +1349,21 @@ $role = $currentUser['role'];
                             </div>
                             <div class="feedback-date" style="margin-bottom: 20px;">
                                 <i class="fas fa-calendar-alt"></i>
-                                ${calculateDaysAgo(fb.created_at)}
+                                Submitted ${calculateDaysAgo(fb.created_at)}
                             </div>
-                            <div class="feedback-content" style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid var(--primary-color);">
+                            <div class="feedback-content" style="background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid var(--accent-color);">
                                 <p style="margin: 0; line-height: 1.6;">${fb.message}</p>
                             </div>
                         `;
                         document.getElementById('feedbackDetails').innerHTML = detailsHtml;
                         
-                        // Enhanced responses
-                        let responsesHtml = '<h3 style="margin-top: 30px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i class="fas fa-comments"></i>Responses:</h3>';
+                        // Enhanced responses section
+                        let responsesHtml = '<h3 style="margin-top: 30px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;"><i class="fas fa-reply-all"></i>Admin Responses:</h3>';
                         if (data.responses.length === 0) {
                             responsesHtml += `
                                 <div style="text-align: center; padding: 30px; color: #6c757d;">
                                     <i class="fas fa-comment-slash" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
-                                    <p>No responses yet.</p>
+                                    <p>No responses yet. Our team will review your feedback and respond soon!</p>
                                 </div>
                             `;
                         } else {
@@ -1427,13 +1371,13 @@ $role = $currentUser['role'];
                                 responsesHtml += `
                                     <div class="response">
                                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                            <i class="fas fa-user-tie" style="color: var(--primary-color);"></i>
+                                            <i class="fas fa-user-tie" style="color: var(--accent-color);"></i>
                                             <strong>${response.admin_name}:</strong>
                                         </div>
                                         <p style="margin: 10px 0;">${response.message}</p>
                                         <small>
                                             <i class="fas fa-clock"></i>
-                                            ${calculateDaysAgo(response.created_at)}
+                                            Responded ${calculateDaysAgo(response.created_at)}
                                         </small>
                                     </div>
                                 `;
@@ -1441,91 +1385,8 @@ $role = $currentUser['role'];
                         }
                         document.getElementById('responsesList').innerHTML = responsesHtml;
                         
-                        // Set current status in select if admin
-                        if (userRole === 'admin') {
-                            document.getElementById('updateStatus').value = fb.status;
-                        }
-                        
                         // Show modal
                         document.getElementById('detailsModal').style.display = 'flex';
-                        
-                        // Attach submit events if admin
-                        if (userRole === 'admin') {
-                            const statusForm = document.getElementById('statusForm');
-                            statusForm.onsubmit = function(e) {
-                                e.preventDefault();
-                                console.log('Status form submitted for feedback ID:', feedbackId);
-                                const newStatus = document.getElementById('updateStatus').value;
-                                
-                                fetch('feedback_handler.php', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({ action: 'update_status', feedback_id: feedbackId, status: newStatus })
-                                })
-                                .then(res => {
-                                    if (!res.ok) {
-                                        throw new Error(`HTTP error! Status: ${res.status}`);
-                                    }
-                                    return res.json();
-                                })
-                                .then(d => {
-                                    if (d.success) {
-                                        alert('Status updated successfully!');
-                                        viewFeedbackDetails(feedbackId);
-                                        loadFeedback(document.getElementById('filterCategory').value, document.getElementById('filterStatus').value);
-                                    } else {
-                                        console.error('Error updating status:', d.message);
-                                        alert('Error updating status: ' + d.message);
-                                    }
-                                })
-                                .catch(err => {
-                                    console.error('Error updating status:', err);
-                                    alert('An error occurred while updating status: ' + err.message);
-                                });
-                            };
-
-                            const responseForm = document.getElementById('responseForm');
-                            responseForm.onsubmit = function(e) {
-                                e.preventDefault();
-                                console.log('Response form submitted for feedback ID:', feedbackId);
-                                const message = document.getElementById('responseMessage').value;
-                                if (!message.trim()) {
-                                    alert('Response message cannot be empty');
-                                    return;
-                                }
-                                
-                                fetch('feedback_handler.php', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({ action: 'response', feedback_id: feedbackId, message })
-                                })
-                                .then(res => {
-                                    if (!res.ok) {
-                                        throw new Error(`HTTP error! Status: ${res.status}`);
-                                    }
-                                    return res.json();
-                                })
-                                .then(d => {
-                                    if (d.success) {
-                                        alert('Response added successfully!');
-                                        responseForm.reset();
-                                        viewFeedbackDetails(feedbackId);
-                                        loadFeedback(document.getElementById('filterCategory').value, document.getElementById('filterStatus').value);
-                                    } else {
-                                        console.error('Error adding response:', d.message);
-                                        alert('Error adding response: ' + d.message);
-                                    }
-                                })
-                                .catch(err => {
-                                    console.error('Error adding response:', err);
-                                    alert('An error occurred while adding response: ' + err.message);
-                                });
-                            };
-                        }
                     } else {
                         console.error('Error fetching details:', data.message);
                         alert('Error fetching details: ' + data.message);
