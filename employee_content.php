@@ -83,16 +83,22 @@ if ($result) {
             --dark-text: #2c3e50;
             --light-text: #ecf0f1;
             --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            --card-hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
             --transition: all 0.3s ease;
+            --border-radius: 15px;
+            --gradient-primary: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
-            min-height: 100vh;
+            background: var(--gradient-primary);
             color: var(--dark-text);
             position: relative;
-            overflow: hidden;
         }
 
         body::before {
@@ -112,9 +118,19 @@ if ($result) {
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .dashboard-container {
             display: flex;
-            min-height: 100vh;
             height: 100vh;
             overflow: hidden;
         }
@@ -128,7 +144,8 @@ if ($result) {
             box-shadow: var(--card-shadow);
             z-index: 100;
             transition: var(--transition);
-            overflow: hidden;
+            overflow-y: auto;
+            flex-shrink: 0;
         }
 
         .logo-area {
@@ -234,9 +251,10 @@ if ($result) {
 
         .main-content {
             flex: 1;
-            padding: 30px;
+            padding: 20px;
             overflow-y: auto;
-            height: calc(100vh - 60px);
+            height: 100vh;
+            animation: fadeIn 0.8s ease-out;
         }
 
         .header {
@@ -250,6 +268,7 @@ if ($result) {
             font-size: 28px;
             font-weight: 600;
             color: white;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
 
         .header-actions {
@@ -292,12 +311,15 @@ if ($result) {
         }
 
         .btn-logout {
-            background: var(--danger-color);
+            background: rgba(231, 76, 60, 0.9);
             color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
         }
 
         .btn-logout:hover {
-            background: #c0392b;
+            background: rgba(231, 76, 60, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
         }
 
         .content-section {
@@ -605,11 +627,7 @@ if ($result) {
                 padding: 10px 0;
             }
 
-            .logo-area {
-                display: none;
-            }
-
-            .user-info {
+            .logo-area, .user-info {
                 display: none;
             }
 
@@ -644,20 +662,11 @@ if ($result) {
 
             .main-content {
                 margin-bottom: 80px;
+                height: calc(100vh - 80px);
             }
 
             .content-grid {
                 grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                max-height: none;
-            }
-
-            .modal {
-                width: 95%;
-                max-height: 85vh;
-            }
-
-            .modal-overlay {
-                padding: 10px;
             }
         }
 
@@ -668,43 +677,8 @@ if ($result) {
                 gap: 15px;
             }
 
-            .header-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
-
             .content-grid {
                 grid-template-columns: 1fr;
-                max-height: none;
-            }
-
-            .modal-body {
-                padding: 15px;
-            }
-
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .file-icon {
-                margin-left: 0;
-                margin-top: 10px;
-            }
-        }
-
-        .main-content {
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
             }
         }
     </style>
@@ -759,7 +733,7 @@ if ($result) {
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="profile.php" class="nav-link">
+                    <a href="emp_profile.php" class="nav-link">
                         <i class="fas fa-user-circle"></i>
                         <span>Profile</span>
                     </a>
